@@ -1,6 +1,7 @@
 # Aurora ⏰🔒
 
 **FR** — Réveil Android épuré : la sonnerie ne s'arrête qu'avec **votre code ou votre mot de passe**.
+
 **EN** — A clean Android alarm clock: the alarm only stops with **your PIN or password**.
 
 ## Télécharger / Download
