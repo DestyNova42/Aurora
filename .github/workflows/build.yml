@@ -29,8 +29,30 @@ jobs:
         with:
           gradle-version: "8.14.3"
 
-      - name: Clé de signature (depuis les Secrets)
+      - name: Cle de signature
         env:
           KEYSTORE_B64: ${{ secrets.AURORA_KEYSTORE }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/aurora.jks" && test -s "$RUNNER_TEMP/aurora.jks" && echo "AURORA_KEYSTORE_PATH=$RUNNER_TEMP/aurora.jks" >> "$GITHUB_ENV"
+
+      - name: Compiler l'APK
+        working-directory: projet/Aurora
+        env:
+          AURORA_KEYSTORE_PASSWORD: ${{ secrets.AURORA_KEYSTORE_PASSWORD }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Préparer le fichier
+        id: version
         run: |
-          if [ -z "$KEYSTORE_
+          VER=$(grep -oP 'versionName = "\K[^"]+' projet/Aurora/app/build.gradle.kts)
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          cp projet/Aurora/app/build/outputs/apk/release/app-release.apk "Aurora-$VER.apk"
+          rm -f "$RUNNER_TEMP/aurora.jks"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.ver }}
+          name: Aurora ${{ steps.version.outputs.ver }}
+          files: Aurora-${{ steps.version.outputs.ver }}.apk
+          body: |
+            **FR** — Téléchargez `Aurora-${{ steps.version.outputs.ver }}.apk` ci-dessous, ouvrez-le sur votre téléphone et autorisez l'installation.
+            **EN** — Download `Aurora-${{ steps.version.outputs.ver }}.apk` below, open it on your phone and allow the installation.
